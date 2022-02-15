@@ -1,8 +1,10 @@
 import * as cdk from '@aws-cdk/core';
 import * as s3 from '@aws-cdk/aws-s3';
 import * as rds from '@aws-cdk/aws-rds';
-import * as ec2 from '@aws-cdk/aws-ec2'
-import { bucketName, vpcId, s3CorsRules as cors, ghostDbAdminPassword, ghostDbAdminUser, ghostDbName as databaseName, ghostDbPort } from './config';
+import * as ec2 from '@aws-cdk/aws-ec2';
+import * as cloudfront from '@aws-cdk/aws-cloudfront';
+import * as origins from '@aws-cdk/aws-cloudfront-origins';
+import { bucketName, vpcId, s3CorsRules as cors, ghostDbAdminPassword, ghostDbAdminUser, ghostDbName as databaseName, ghostDbPort, region } from './config';
 
 /**
  * Ghost CDK Automation stack that creates an S3 bucket and a RDS (MySQL) database.
@@ -12,13 +14,25 @@ export class CdkGhostAutomationStack extends cdk.Stack {
     super(scope, id, props);
 
     // Creating the s3 bucket
-    new s3.Bucket(this, 'GhostS3Bucket', {
+    const s3Bucket = new s3.Bucket(this, 'GhostS3Bucket', {
       cors,
       bucketName,
       enforceSSL: true,
       autoDeleteObjects: true,
       publicReadAccess: false,
       removalPolicy: cdk.RemovalPolicy.DESTROY
+    });
+
+    const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'ghostCloudFrontOAI', {
+      comment: 'Allow access to s3'
+    });
+
+    const distribution = new cloudfront.Distribution(this, 'ghostS3Distribution', {
+      defaultBehavior: {
+        origin: new origins.S3Origin(s3Bucket, { originAccessIdentity }),
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
     });
     
     // Creating the RDS (MySQL) database in a VPC (default)
@@ -55,23 +69,17 @@ export class CdkGhostAutomationStack extends cdk.Stack {
     });
 
     // Some outputs including the credentials
-    new cdk.CfnOutput(this, 'ghostBucketName', {
+    new cdk.CfnOutput(this, 's3BucketName', {
       value: bucketName,
     });
-    new cdk.CfnOutput(this, 'ghostDbName', {
-      value: databaseName,
+    new cdk.CfnOutput(this, 's3BucketRegion', {
+      value: region,
     });
-    new cdk.CfnOutput(this, 'ghostDbPort', {
-      value: ghostDbPort + '',
+    new cdk.CfnOutput(this, 's3AssetHostUrl', {
+      value: distribution.domainName,
     });
-    new cdk.CfnOutput(this, 'ghostDbEndpoint', {
-      value: dbInstance.instanceEndpoint.hostname,
-    });
-    new cdk.CfnOutput(this, 'ghostDbAdminUser', {
-      value: ghostDbAdminUser!,
-    });
-    new cdk.CfnOutput(this, 'ghostDbAdminPassword', {
-      value: ghostDbAdminPassword!,
+    new cdk.CfnOutput(this, 'mysqlDatabaseUrl', {
+      value: `mysql://${ghostDbAdminUser}:${ghostDbAdminPassword}@${dbInstance.instanceEndpoint.hostname}:${ghostDbPort}/${databaseName}`,
     });
   }
 }
