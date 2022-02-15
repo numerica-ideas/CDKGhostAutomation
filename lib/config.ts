@@ -12,6 +12,7 @@ export const bucketName: string = process.env.CDK_DEFAULT_BUCKET_NAME || 's3-gho
 
 // DB parameters
 export const ghostDbName: string = 'GhostDB';
+export const ghostDbPort: number = 3345;
 export const ghostDbAdminUser: string = 'ghost_admin';
 export const ghostDbAdminPassword: string = uuidv4();
 
