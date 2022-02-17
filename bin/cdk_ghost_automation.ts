@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from '@aws-cdk/core';
-import { CdkGhostAutomationStack } from '../lib/cdk_ghost_automation-stack';
 import { account, region } from '../lib/config';
+import { CdkGhostAutomationStack } from '../lib/cdk_ghost_automation-stack';
 
 const app = new cdk.App();
 new CdkGhostAutomationStack(app, 'CdkGhostAutomationStack', {

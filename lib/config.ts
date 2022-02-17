@@ -11,6 +11,7 @@ export const region: string = process.env.CDK_DEFAULT_REGION || 'aws-region';
 export const bucketName: string = process.env.CDK_DEFAULT_BUCKET_NAME || 's3-ghost-automation';
 
 // DB parameters
+export const enabledDb: boolean = true;     // Enabling or not the database provisioning
 export const ghostDbName: string = 'GhostDB';
 export const ghostDbPort: number = 3345;
 export const ghostDbAdminUser: string = 'ghost_admin';
