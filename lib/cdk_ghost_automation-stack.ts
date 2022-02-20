@@ -23,18 +23,6 @@ export class CdkGhostAutomationStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY
     });
 
-    const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'ghostCloudFrontOAI', {
-      comment: 'Allow access to s3'
-    });
-
-    const distribution = new cloudfront.Distribution(this, 'ghostS3Distribution', {
-      defaultBehavior: {
-        origin: new origins.S3Origin(s3Bucket, { originAccessIdentity }),
-        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      },
-    });
-
     // S3 outputs
     new cdk.CfnOutput(this, 's3BucketName', {
       value: config.bucketName,
@@ -42,9 +30,25 @@ export class CdkGhostAutomationStack extends cdk.Stack {
     new cdk.CfnOutput(this, 's3BucketRegion', {
       value: config.region,
     });
-    new cdk.CfnOutput(this, 's3AssetHostUrl', {
-      value: distribution.domainName,
-    });
+
+    // CDN distribution configurations with OAI
+    if (config.enabledCDN) {
+      const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'ghostCloudFrontOAI', {
+        comment: 'Allow access to s3'
+      });
+  
+      const distribution = new cloudfront.Distribution(this, 'ghostS3Distribution', {
+        defaultBehavior: {
+          origin: new origins.S3Origin(s3Bucket, { originAccessIdentity }),
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        },
+      });
+      
+      new cdk.CfnOutput(this, 's3AssetHostUrl', {
+        value: distribution.domainName,
+      });
+    }
 
     if (config.enabledDb) {
       // Creating the RDS (MySQL) database in a VPC (default)
