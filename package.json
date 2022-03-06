@@ -4,6 +4,7 @@
   "bin": {
     "cdk_ghost_automation": "bin/cdk_ghost_automation.js"
   },
+  "author": "NumericaIdeas Network",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
